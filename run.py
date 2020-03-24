@@ -1,3 +1,4 @@
+
 import numpy as np
 
 multiplier = 2
@@ -182,6 +183,7 @@ def __optimal():
 class Page:
     inputCount = 0
     inputBias = 0
+    biasPower = 0.5
     frequency = 1
     timeStamp = 0
     number = 0
@@ -192,12 +194,45 @@ class Page:
     def __init__( self, number, timeStamp):
         self.number = number
         self.timeStamp = timeStamp
+
     def incrementFrequency(self):
         self.frequency += 1
+
     def updateTimeStamp(self, timeStamp):
         self.timeStamp = timeStamp
+
     def getScore(self):
         return self.A * self.frequency + self.B * self.timeStamp
+
+    def getBias(self, avgFrequency, avgTimeStamp):
+        timeBias = (self.timeStamp - avgTimeStamp) / avgTimeStamp
+        freqBias = (self.frequency - avgFrequency) / avgFrequency
+        if freqBias > timeBias:
+            return 'f'
+        elif timeBias > freqBias:
+            return 't'
+        else:
+            return 'none'
+
+
+    @staticmethod
+    def applyBias(bias):
+        Page.inputCount +=1
+        if bias == 'f':
+            Page.inputBias += 1
+        elif bias == 't':
+            Page.inputBias -= 1
+        
+        
+        deltaScore = Page.inputBias / Page.inputCount * Page.biasPower
+        Page.A = Page.base_A + deltaScore
+        Page.B = Page.base_B - deltaScore
+            
+    
+    def printVars(self):
+        print ("A = ", self.A)
+        print("B = ", self.B)  
+        
 
 
 def __jygy():
@@ -223,22 +258,8 @@ def __jygy():
                     if(myDict[page[k]].getScore() < min):
                         min = myDict[page[k]].getScore()
                         x = k
-                # min = 999
-                # for k in range(m):
-                #     flag = 0
-                #     j =  i
-                #     while j>=0:
-                #         j-=1
-                #         if(page[k] == a[j]):
-                #             flag = 1
-                #             break
-                #     if (flag == 1 and min > j):
-                #         min = j
-
-                #         x = k
-
-            if(page[x]!= -1):
                 myDict.pop(page[x])
+ 
             page[x] = a[i]
             if a[i] in myDict.keys():
                 myDict[a[i]].incrementFrequency()
@@ -255,9 +276,26 @@ def __jygy():
                 else:
                     if printBool: print("-", end=' ')
         else:
+            totalTimeStamp = 0
+            totalFrequencies = 0
+            avgTimeStamp = 0
+            avgFrequency = 0
+            itemsCount = 0
+            for key,value in myDict.items():
+                totalTimeStamp += value.timeStamp
+                totalFrequencies += value.frequency 
+                itemsCount += 1
+            if itemsCount > 0:
+                avgTimeStamp = totalTimeStamp / itemsCount
+                avgFrequency = totalFrequencies / itemsCount
             if a[i] in myDict.keys():
+                bias = myDict[a[i]].getBias(avgFrequency, avgTimeStamp)
+                if (bias != 'none'):
+                    Page.applyBias(bias)
+                myDict[a[i]].updateTimeStamp(i)
                 myDict[a[i]].incrementFrequency()
                 myDict[a[i]].updateTimeStamp(i)
+                
             if printBool: print("\n%d -> No Page Fault" % (a[i]), end=' ')
             
     print("\n Total page faults : %d." % (page_faults))
@@ -293,4 +331,3 @@ while True:
         __jygy()
     if ch == 5:
         break
-
