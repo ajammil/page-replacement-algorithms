@@ -1,3 +1,4 @@
+
 import numpy as np
 sigma = 200
 mu = 1024*2
@@ -180,7 +181,7 @@ class Page:
     frequency = 1
     timeStamp = 0
     number = 0
-    A = 1
+    A = 0.5
     B = 0.5
     def __init__( self, number, timeStamp):
         self.number = number
@@ -191,6 +192,26 @@ class Page:
         self.timeStamp = timeStamp
     def getScore(self):
         return self.A * self.frequency + self.B * self.timeStamp
+    
+    @staticmethod
+    def favourA():
+        if Page.A <= 1.0:
+            Page.A += 0.01
+        if Page.B != 0:
+            Page.B -= 0.01
+            
+            
+    @staticmethod
+    def favourB():
+        if Page.B <= 1.0:
+            Page.B += 0.01
+        if Page.A != 0:
+            Page.A -= 0.01
+    
+    def printVars(self):
+        print ("A = ", self.A)
+        print("B = ", self.B)  
+        
 
 
 def __jygy():
@@ -234,10 +255,12 @@ def __jygy():
                 myDict.pop(page[x])
             page[x] = a[i]
             if a[i] in myDict.keys():
+                myDict[a[i]].favourA()
                 myDict[a[i]].incrementFrequency()
                 myDict[a[i]].updateTimeStamp(i)
             else:
                 myDict[a[i]] = Page(a[i],i)
+                myDict[a[i]].favourB()
 
             x=(x+1)%m
             page_faults+=1
@@ -281,4 +304,3 @@ while True:
         __jygy()
     if ch == 5:
         break
-
