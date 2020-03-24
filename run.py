@@ -2,7 +2,7 @@
 import numpy as np
 
 multiplier = 2
-sigma = 200*multiplier
+sigma = 300*multiplier
 mu = 1024*2*multiplier
 sMax = 2047*2*multiplier
 size = 2048*2*multiplier
@@ -11,11 +11,11 @@ for i,item in enumerate(s):
     if item > sMax:
         s[i] = sMax
 
-import matplotlib.pyplot as plt
-count, bins, ignored = plt.hist(s, 2048, density=True)
-plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) *np.exp( - (bins - mu)**2 / (2 * sigma**2) ),linewidth=2, color='r')
-plt.ion()
-plt.show()
+# import matplotlib.pyplot as plt
+# count, bins, ignored = plt.hist(s, 2048, density=True)
+# plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) *np.exp( - (bins - mu)**2 / (2 * sigma**2) ),linewidth=2, color='r')
+# plt.ion()
+# plt.show()
 
 
 a = s.tolist()
@@ -183,7 +183,7 @@ def __optimal():
 class Page:
     inputCount = 0
     inputBias = 0
-    biasPower = 0.5
+    biasPower = 0.75
     frequency = 1
     timeStamp = 0
     number = 0
@@ -201,8 +201,11 @@ class Page:
     def updateTimeStamp(self, timeStamp):
         self.timeStamp = timeStamp
 
-    def getScore(self):
-        return self.A * self.frequency + self.B * self.timeStamp
+    def getScore(self,lowestTimeStamp):
+        return self.A * self.frequency + self.B * (self.timeStamp - lowestTimeStamp)
+
+    def getScore_LRU(self):
+        return self.timeStamp
 
     def getBias(self, avgFrequency, avgTimeStamp):
         timeBias = (self.timeStamp - avgTimeStamp) / avgTimeStamp
@@ -254,9 +257,13 @@ def __jygy():
         if flag == 0:
             if page[x] != -1:
                 min = 999999999999999
+                lowestTimeStamp = 999999999999999999999
                 for k in range(m):
-                    if(myDict[page[k]].getScore() < min):
-                        min = myDict[page[k]].getScore()
+                    if(myDict[page[k]].timeStamp < lowestTimeStamp):
+                        lowestTimeStamp = myDict[page[k]].timeStamp
+                for k in range(m):
+                    if(myDict[page[k]].getScore(lowestTimeStamp) < min):
+                        min = myDict[page[k]].getScore(lowestTimeStamp)
                         x = k
                 myDict.pop(page[x])
  
@@ -299,6 +306,67 @@ def __jygy():
             if printBool: print("\n%d -> No Page Fault" % (a[i]), end=' ')
             
     print("\n Total page faults : %d." % (page_faults))
+def __jygy_LRU():
+    global a,n,m,printBool
+    myDict = {}
+    x = 0
+    page_faults = 0
+    page = []
+    for i in range(m):
+        page.append(-1)
+
+    for i in range(n):
+        flag = 0
+        for j in range(m):
+            if(page[j] == a[i]):
+                flag = 1
+                break
+        if printBool: print("\n"+str(i) + "/"+str(n-1)+" ")
+        if flag == 0:
+            if page[x] != -1:
+                min = 999999999999999
+                lowestTimeStamp = 999999999999999999999
+                for k in range(m):
+                    if(myDict[page[k]].getScore_LRU() < min):
+                        min = myDict[page[k]].getScore_LRU()
+                        x = k
+                myDict.pop(page[x])
+ 
+            page[x] = a[i]
+            if a[i] in myDict.keys():
+                myDict[a[i]].incrementFrequency()
+                myDict[a[i]].updateTimeStamp(i)
+            else:
+                myDict[a[i]] = Page(a[i],i)
+
+            x=(x+1)%m
+            page_faults+=1
+            if printBool: print("\n%d ->" % (a[i]), end=' ')
+            for j in range(m):
+                if page[j] != -1:
+                    if printBool: print(page[j], end=' ')
+                else:
+                    if printBool: print("-", end=' ')
+        else:
+            totalTimeStamp = 0
+            totalFrequencies = 0
+            avgTimeStamp = 0
+            avgFrequency = 0
+            itemsCount = 0
+            for key,value in myDict.items():
+                totalTimeStamp += value.timeStamp
+                totalFrequencies += value.frequency 
+                itemsCount += 1
+            if itemsCount > 0:
+                avgTimeStamp = totalTimeStamp / itemsCount
+                avgFrequency = totalFrequencies / itemsCount
+                myDict[a[i]].updateTimeStamp(i)
+                myDict[a[i]].incrementFrequency()
+                myDict[a[i]].updateTimeStamp(i)
+                
+            if printBool: print("\n%d -> No Page Fault" % (a[i]), end=' ')
+            
+    print("\n Total page faults : %d." % (page_faults))
 
 
 #Displaying the menu and calling the functions.    
@@ -316,7 +384,8 @@ while True:
     print(" 2. LRU.")
     print(" 3. Optimal.")
     print(" 4. JIGY.")
-    print(" 5. Exit.")
+    print(" 5. JIGY's LRU.")
+    print(" 6. Exit.")
     ch = eval(input(" Select : "))
 
     if ch == 0:
@@ -330,4 +399,6 @@ while True:
     if ch == 4:
         __jygy()
     if ch == 5:
+        __jygy_LRU()
+    if ch == 6:
         break
