@@ -1,21 +1,24 @@
 import numpy as np
-sigma = 200
-mu = 1024*2
-sMax = 2047*2
-size = 2048*2
+
+multiplier = 2
+sigma = 200*multiplier
+mu = 1024*2*multiplier
+sMax = 2047*2*multiplier
+size = 2048*2*multiplier
 s = np.abs((np.random.normal(loc=mu, scale=sigma, size=size)).astype(int))
 for i,item in enumerate(s):
     if item > sMax:
         s[i] = sMax
 
-# import matplotlib.pyplot as plt
-# count, bins, ignored = plt.hist(s, 2048, density=True)
-# plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) *np.exp( - (bins - mu)**2 / (2 * sigma**2) ),linewidth=2, color='r')
-# plt.show()
+import matplotlib.pyplot as plt
+count, bins, ignored = plt.hist(s, 2048, density=True)
+plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) *np.exp( - (bins - mu)**2 / (2 * sigma**2) ),linewidth=2, color='r')
+plt.ion()
+plt.show()
 
 
 a = s.tolist()
-a = [1,2,3,4,1,2,5,1,2,3,4,5]
+# a = [1,2,3,4,1,2,5,1,2,3,4,5]
 
 
 n = len(a)
@@ -32,7 +35,7 @@ def accept():
 
 #First In First Out Page Replacement Algorithm
 def __fifo():
-    global a,n,m
+    global a,n,m,printBool
     f = -1
     page_faults = 0
     page = []
@@ -45,19 +48,19 @@ def __fifo():
             if(page[j] == a[i]):
                 flag = 1
                 break
-
+        if printBool: print("\n"+str(i) + "/"+str(n-1)+" ")
         if flag == 0:
             f=(f+1)%m
             page[f] = a[i]
             page_faults+=1
-            print("\n%d ->" % (a[i]), end=' ')
+            if printBool: print("\n%d ->" % (a[i]), end=' ')
             for j in range(m):
                 if page[j] != -1:
-                    print(page[j], end=' ')
+                    if printBool: print(page[j], end=' ')
                 else:
-                    print("-", end=' ')
+                    if printBool: print("-", end=' ')
         else:
-            print("\n%d -> No Page Fault" % (a[i]), end=' ')
+            if printBool: print("\n%d -> No Page Fault" % (a[i]), end=' ')
             
     print("\n Total page faults : %d." % (page_faults))
 
@@ -65,7 +68,7 @@ def __fifo():
 
 #Least Recently Used Page Replacement Algorithm
 def __lru():
-    global a,n,m
+    global a,n,m,printBool
     x = 0
     page_faults = 0
     page = []
@@ -78,7 +81,7 @@ def __lru():
             if(page[j] == a[i]):
                 flag = 1
                 break
-            
+        if printBool: print("\n"+str(i) + "/"+str(n-1)+" ")
         if flag == 0:
             if page[x] != -1:
                 min = 99999
@@ -97,20 +100,20 @@ def __lru():
             page[x] = a[i]
             x=(x+1)%m
             page_faults+=1
-            print("\n%d ->" % (a[i]), end=' ')
+            if printBool: print("\n%d ->" % (a[i]), end=' ')
             for j in range(m):
                 if page[j] != -1:
-                    print(page[j], end=' ')
+                    if printBool: print(page[j], end=' ')
                 else:
-                    print("-", end=' ')
+                    if printBool: print("-", end=' ')
         else:
-            print("\n%d -> No Page Fault" % (a[i]), end=' ')
+            if printBool: print("\n%d -> No Page Fault" % (a[i]), end=' ')
             
     print("\n Total page faults : %d." % (page_faults))
 
 #Optimal Page Replacement Algorithm
 def __optimal():
-    global a,n,m
+    global a,n,m,printBool
     x = 0
     page_faults = 0
     page = []
@@ -124,7 +127,7 @@ def __optimal():
             if(page[j] == a[i]):
                 flag = 1
                 break
-            
+        if printBool: print("\n"+str(i) + "/"+str(n-1)+" ")
         if flag == 0:
             # look for an empty one
             faulted = False
@@ -161,14 +164,14 @@ def __optimal():
             
             page_faults += 1
             page[new_slot] = a[i]
-            print("\n%d ->" % (a[i]), end=' ')
+            if printBool: print("\n%d ->" % (a[i]), end=' ')
             for j in range(m):
                 if page[j] != FREE:
-                    print(page[j], end=' ')
+                    if printBool: print(page[j], end=' ')
                 else:
-                    print("-", end=' ')
+                    if printBool: print("-", end=' ')
         else:
-            print("\n%d -> No Page Fault" % (a[i]), end=' ')
+            if printBool: print("\n%d -> No Page Fault" % (a[i]), end=' ')
             
     print("\n Total page faults : %d." % (page_faults))
 
@@ -177,11 +180,15 @@ def __optimal():
 
 #JYGY Replacement Algorithm
 class Page:
+    inputCount = 0
+    inputBias = 0
     frequency = 1
     timeStamp = 0
     number = 0
+    base_A = 1
+    base_B = 1
     A = 1
-    B = 0.5
+    B = 1
     def __init__( self, number, timeStamp):
         self.number = number
         self.timeStamp = timeStamp
@@ -194,7 +201,7 @@ class Page:
 
 
 def __jygy():
-    global a,n,m
+    global a,n,m,printBool
     myDict = {}
     x = 0
     page_faults = 0
@@ -208,7 +215,7 @@ def __jygy():
             if(page[j] == a[i]):
                 flag = 1
                 break
-            
+        if printBool: print("\n"+str(i) + "/"+str(n-1)+" ")
         if flag == 0:
             if page[x] != -1:
                 min = 999999999999999
@@ -241,17 +248,17 @@ def __jygy():
 
             x=(x+1)%m
             page_faults+=1
-            print("\n%d ->" % (a[i]), end=' ')
+            if printBool: print("\n%d ->" % (a[i]), end=' ')
             for j in range(m):
                 if page[j] != -1:
-                    print(page[j], end=' ')
+                    if printBool: print(page[j], end=' ')
                 else:
-                    print("-", end=' ')
+                    if printBool: print("-", end=' ')
         else:
             if a[i] in myDict.keys():
                 myDict[a[i]].incrementFrequency()
                 myDict[a[i]].updateTimeStamp(i)
-            print("\n%d -> No Page Fault" % (a[i]), end=' ')
+            if printBool: print("\n%d -> No Page Fault" % (a[i]), end=' ')
             
     print("\n Total page faults : %d." % (page_faults))
 
@@ -259,6 +266,11 @@ def __jygy():
 #Displaying the menu and calling the functions.    
 while True:
     m = eval(input("m: "))
+    printBool = input("Do you want to print? Y/N: ")
+    if(printBool == "Y" or printBool == "y"):
+        printBool = True
+    else:
+        printBool = False
     print("\n SIMULATION OF PAGE REPLACEMENT ALGORITHM")
     print(" Menu:")
     print(" 0. Accept.")
