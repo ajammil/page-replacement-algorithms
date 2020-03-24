@@ -2,7 +2,7 @@
 import numpy as np
 
 multiplier = 2
-sigma = 300*multiplier
+sigma = 400*multiplier
 mu = 1024*2*multiplier
 sMax = 2047*2*multiplier
 size = 2048*2*multiplier
@@ -207,6 +207,11 @@ class Page:
     def getScore_LRU(self):
         return self.timeStamp
 
+    def getScore_2(self, avgFrequency, avgTimeStamp):
+        timeBias = (self.timeStamp - avgTimeStamp) / avgTimeStamp
+        freqBias = (self.frequency - avgFrequency) / avgFrequency
+        return timeBias + freqBias
+
     def getBias(self, avgFrequency, avgTimeStamp):
         timeBias = (self.timeStamp - avgTimeStamp) / avgTimeStamp
         freqBias = (self.frequency - avgFrequency) / avgFrequency
@@ -369,14 +374,92 @@ def __jygy_LRU():
     print("\n Total page faults : %d." % (page_faults))
 
 
+
+
+def __jygy_2():
+    global a,n,m,printBool
+    myDict = {}
+    x = 0
+    page_faults = 0
+    page = []
+    for i in range(m):
+        page.append(-1)
+
+    for i in range(n):
+        flag = 0
+        for j in range(m):
+            if(page[j] == a[i]):
+                flag = 1
+                break
+        if printBool: print("\n"+str(i) + "/"+str(n-1)+" ")
+        if flag == 0:
+            if page[x] != -1:
+                min = 999999999999999
+                lowestTimeStamp = 999999999999999999999
+                totalTimeStamp = 0
+                totalFrequencies = 0
+                avgTimeStamp = 0
+                avgFrequency = 0
+                itemsCount = 0
+                for key,value in myDict.items():
+                    totalTimeStamp += value.timeStamp
+                    totalFrequencies += value.frequency 
+                    itemsCount += 1
+                if itemsCount > 0:
+                    avgTimeStamp = totalTimeStamp / itemsCount
+                    avgFrequency = totalFrequencies / itemsCount
+                for k in range(m):
+                    if(myDict[page[k]].getScore_2(avgFrequency,avgTimeStamp) < min):
+                        min = myDict[page[k]].getScore_2(avgFrequency,avgTimeStamp)
+                        x = k
+                myDict.pop(page[x])
+ 
+            page[x] = a[i]
+            if a[i] in myDict.keys():
+                myDict[a[i]].incrementFrequency()
+                myDict[a[i]].updateTimeStamp(i)
+            else:
+                myDict[a[i]] = Page(a[i],i)
+
+            x=(x+1)%m
+            page_faults+=1
+            if printBool: print("\n%d ->" % (a[i]), end=' ')
+            for j in range(m):
+                if page[j] != -1:
+                    if printBool: print(page[j], end=' ')
+                else:
+                    if printBool: print("-", end=' ')
+        else:
+            totalTimeStamp = 0
+            totalFrequencies = 0
+            avgTimeStamp = 0
+            avgFrequency = 0
+            itemsCount = 0
+            for key,value in myDict.items():
+                totalTimeStamp += value.timeStamp
+                totalFrequencies += value.frequency 
+                itemsCount += 1
+            if itemsCount > 0:
+                avgTimeStamp = totalTimeStamp / itemsCount
+                avgFrequency = totalFrequencies / itemsCount
+                myDict[a[i]].updateTimeStamp(i)
+                myDict[a[i]].incrementFrequency()
+                myDict[a[i]].updateTimeStamp(i)
+                
+            if printBool: print("\n%d -> No Page Fault" % (a[i]), end=' ')
+            
+    print("\n Total page faults : %d." % (page_faults))
+
+
+
 #Displaying the menu and calling the functions.    
+printBool = input("Do you want to print results while calculating? Y/N: ")
+if(printBool == "Y" or printBool == "y"):
+    printBool = True
+else:
+    printBool = False
 while True:
     m = eval(input("m: "))
-    printBool = input("Do you want to print? Y/N: ")
-    if(printBool == "Y" or printBool == "y"):
-        printBool = True
-    else:
-        printBool = False
     print("\n SIMULATION OF PAGE REPLACEMENT ALGORITHM")
     print(" Menu:")
     print(" 0. Accept.")
@@ -385,7 +468,8 @@ while True:
     print(" 3. Optimal.")
     print(" 4. JIGY.")
     print(" 5. JIGY's LRU.")
-    print(" 6. Exit.")
+    print(" 6. JIGY 2.")
+    print(" 7. Exit.")
     ch = eval(input(" Select : "))
 
     if ch == 0:
@@ -401,4 +485,6 @@ while True:
     if ch == 5:
         __jygy_LRU()
     if ch == 6:
+        __jygy_2()
+    if ch == 7:
         break
