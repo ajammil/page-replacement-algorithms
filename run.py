@@ -270,7 +270,7 @@ class Page:
         
 
 
-def __jygy():
+def __jygy_adaptive():
     global a,n,m,printBool
     Page.reset()
     myDict = {}
@@ -358,7 +358,7 @@ def __jygy_LRU():
         if flag == 0:
             if page[x] != -1:
                 min = 999999999999999
-                lowestTimeStamp = 999999999999999999999
+
                 for k in range(m):
                     if(myDict[page[k]].getScore_LRU() < min):
                         min = myDict[page[k]].getScore_LRU()
@@ -412,7 +412,6 @@ def __jygy_2():
         if flag == 0:
             if page[x] != -1:
                 min = 999999999999999
-                lowestTimeStamp = 999999999999999999999
                 totalTimeStamp = 0
                 totalFrequencies = 0
                 avgTimeStamp = 0
@@ -613,7 +612,58 @@ def __adaptive_random():
     print("\n Total page faults : %d." % (page_faults))
 
 
+def __jygy_static():
+    global a, n, m
+    myDict = {}
+    x = 0
+    page_faults = 0
+    page = [ ]
+    for i in range(m):
+        page.append(-1)
 
+    for i in range(n):
+        flag = 0
+        for j in range(m):
+            if (page[ j ] == a[ i ]):
+                flag = 1
+                break
+
+        if flag == 0:
+            if page[x] != -1:
+                min = 999999999999999
+                lowestTimeStamp = 999999999999999999999
+                for k in range(m):
+                    if(myDict[page[k]].timeStamp < lowestTimeStamp):
+                        lowestTimeStamp = myDict[page[k]].timeStamp
+                for k in range(m):
+                    if(myDict[page[k]].getScore(lowestTimeStamp) < min):
+                        min = myDict[page[k]].getScore(lowestTimeStamp)
+                        x = k
+                myDict.pop(page[x])
+            page[ x ] = a[ i ]
+            if a[ i ] in myDict.keys():
+                myDict[ a[ i ] ].incrementFrequency()
+                myDict[ a[ i ] ].updateTimeStamp(i)
+            else:
+                myDict[ a[ i ] ] = Page(a[ i ], i)
+
+            x = (x + 1) % m
+            page_faults += 1
+            if printBool: print("\n%d ->" % (a[ i ]), end=' ')
+            for j in range(m):
+                if page[ j ] != -1:
+                    if printBool: print(page[ j ], end=' ')
+                    continue
+                else:
+                    if printBool: print("-", end=' ')
+                    continue
+        else:
+            if a[ i ] in myDict.keys():
+                myDict[ a[ i ] ].incrementFrequency()
+                myDict[ a[ i ] ].updateTimeStamp(i)
+            if printBool: print("\n%d -> No Page Fault" % (a[ i ]), end=' ')
+
+    print("\n Total page faults : %d." % (page_faults))
 
 
 
@@ -623,20 +673,23 @@ if(printBool == "Y" or printBool == "y"):
     printBool = True
 else:
     printBool = False
+
+m = eval(input("m: "))
+
 while True:
-    m = eval(input("m: "))
     print("\n SIMULATION OF PAGE REPLACEMENT ALGORITHM")
     print(" Menu:")
     print(" 0. Accept.")
     print(" 1. FIFO.")
     print(" 2. LRU.")
     print(" 3. Optimal.")
-    print(" 4. JIGY Adaptive.")
-    print(" 5. JIGY's LRU.")
-    print(" 6. JIGY Dynamic.")
-    print(" 7. Static Random.")
-    print(" 8. Adaptive Random.")
-    print(" 9. Exit.")
+    print(" 4. JIGY Static.")
+    print(" 5. JIGY Adaptive.")
+    print(" 6. JIGY's LRU.")
+    print(" 7. JIGY Dynamic.")
+    print(" 8. Static Random.")
+    print(" 9. Adaptive Random.")
+    print(" 10. Exit.")
     ch = eval(input(" Select : "))
 
     if ch == 0:
@@ -648,14 +701,16 @@ while True:
     if ch == 3:
         __optimal()
     if ch == 4:
-        __jygy()
+         __jygy_static()
     if ch == 5:
-        __jygy_LRU()
+        __jygy_adaptive()
     if ch == 6:
-        __jygy_2()
+        __jygy_LRU()
     if ch == 7:
-        __static_random()
+        __jygy_2()
     if ch == 8:
-        __adaptive_random()
+        __static_random()
     if ch == 9:
+        __adaptive_random()
+    if ch == 10:
         break
