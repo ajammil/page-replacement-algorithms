@@ -7,20 +7,50 @@ sigmaExp = 800*multiplier
 mu = 1024*2*multiplier
 sMax = 2047*2*multiplier
 size = 2048*2*multiplier
-mode = eval(input("For normal random type (1), for exponential type (2) :"))
+mode = eval(input("For normal random type (1), for exponential type (2) : "))
 if (mode == "(1)" or mode == 1 or mode == "1"):
+    mode = 'norm'
     s = np.abs((np.random.normal(loc=mu, scale=sigma, size=size)).astype(int))
 else:
+    mode = 'exp'
     s = np.abs((np.random.exponential(scale=sigmaExp, size=size)).astype(int))
 for i,item in enumerate(s):
     if item > sMax:
         s[i] = sMax
-print(s)
-import matplotlib.pyplot as plt
-count, bins, ignored = plt.hist(s, 2048, density=True)
-plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) *np.exp( - (bins - mu)**2 / (2 * sigma**2) ),linewidth=2, color='r')
-plt.ion()
-plt.show()
+
+
+plotInput = input("Do you want to plot the input : Y/N? ")
+if(plotInput == "Y" or plotInput == "y"):
+    plotInput = True
+else:
+    plotInput = False
+
+if(plotInput):
+    import matplotlib.pyplot as plt
+    
+
+    count, bins, ignored = plt.hist(s, int(size/2), density=True)
+
+    if(mode == 'exp'):
+        import scipy.stats as ss
+        def plot_exponential(x_range, mu=0, sigma=1, cdf=False, **kwargs):
+            x = x_range
+            if cdf:
+                y = ss.expon.cdf(x, mu, sigma)
+            else:
+                y = ss.expon.pdf(x, mu, sigma)
+            plt.plot(x, y, **kwargs)
+        x = x = np.linspace(0, size, size)
+        plot_exponential(x, 0, sigmaExp, color='red', lw=2, ls='-', alpha=0.5, label='exponential pdf')
+        plt.legend()
+        plt.ion()
+        plt.show()
+    else:
+        plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) *np.exp( - (bins - mu)**2 / (2 * sigma**2) ),linewidth=2, color='r', label ='normal pdf')
+        plt.legend()
+        plt.ion()
+        plt.show()
+
 
 
 a = s.tolist()
