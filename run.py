@@ -1,21 +1,26 @@
 
 import numpy as np
-
+import random
 multiplier = 2
 sigma = 400*multiplier
+sigmaExp = 800*multiplier
 mu = 1024*2*multiplier
 sMax = 2047*2*multiplier
 size = 2048*2*multiplier
-s = np.abs((np.random.normal(loc=mu, scale=sigma, size=size)).astype(int))
+mode = eval(input("For normal random type (1), for exponential type (2) :"))
+if (mode == "(1)" or mode == 1 or mode == "1"):
+    s = np.abs((np.random.normal(loc=mu, scale=sigma, size=size)).astype(int))
+else:
+    s = np.abs((np.random.exponential(scale=sigmaExp, size=size)).astype(int))
 for i,item in enumerate(s):
     if item > sMax:
         s[i] = sMax
-
-# import matplotlib.pyplot as plt
-# count, bins, ignored = plt.hist(s, 2048, density=True)
-# plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) *np.exp( - (bins - mu)**2 / (2 * sigma**2) ),linewidth=2, color='r')
-# plt.ion()
-# plt.show()
+print(s)
+import matplotlib.pyplot as plt
+count, bins, ignored = plt.hist(s, 2048, density=True)
+plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) *np.exp( - (bins - mu)**2 / (2 * sigma**2) ),linewidth=2, color='r')
+plt.ion()
+plt.show()
 
 
 a = s.tolist()
@@ -189,8 +194,22 @@ class Page:
     number = 0
     base_A = 1
     base_B = 1
-    A = 1
-    B = 1
+    A = .5
+    B = .5
+
+    @staticmethod
+    def reset():
+        Page.inputCount = 0
+        Page.inputBias = 0
+        Page.biasPower = 0.75
+        Page.frequency = 1
+        Page.timeStamp = 0
+        Page.number = 0
+        Page.base_A = 1
+        Page.base_B = 1
+        Page.A = .5
+        Page.B = .5
+    
     def __init__( self, number, timeStamp):
         self.number = number
         self.timeStamp = timeStamp
@@ -211,6 +230,14 @@ class Page:
         timeBias = (self.timeStamp - avgTimeStamp) / avgTimeStamp
         freqBias = (self.frequency - avgFrequency) / avgFrequency
         return timeBias + freqBias
+
+    def getAB(self):
+        return self.A,self.B
+
+    def getScore_random(self,chosen):
+        if(chosen):
+            return self.frequency
+        return self.timeStamp
 
     def getBias(self, avgFrequency, avgTimeStamp):
         timeBias = (self.timeStamp - avgTimeStamp) / avgTimeStamp
@@ -245,6 +272,7 @@ class Page:
 
 def __jygy():
     global a,n,m,printBool
+    Page.reset()
     myDict = {}
     x = 0
     page_faults = 0
@@ -306,13 +334,13 @@ def __jygy():
                     Page.applyBias(bias)
                 myDict[a[i]].updateTimeStamp(i)
                 myDict[a[i]].incrementFrequency()
-                myDict[a[i]].updateTimeStamp(i)
                 
             if printBool: print("\n%d -> No Page Fault" % (a[i]), end=' ')
             
     print("\n Total page faults : %d." % (page_faults))
 def __jygy_LRU():
     global a,n,m,printBool
+    Page.reset()
     myDict = {}
     x = 0
     page_faults = 0
@@ -353,23 +381,11 @@ def __jygy_LRU():
                 else:
                     if printBool: print("-", end=' ')
         else:
-            totalTimeStamp = 0
-            totalFrequencies = 0
-            avgTimeStamp = 0
-            avgFrequency = 0
-            itemsCount = 0
-            for key,value in myDict.items():
-                totalTimeStamp += value.timeStamp
-                totalFrequencies += value.frequency 
-                itemsCount += 1
-            if itemsCount > 0:
-                avgTimeStamp = totalTimeStamp / itemsCount
-                avgFrequency = totalFrequencies / itemsCount
-                myDict[a[i]].updateTimeStamp(i)
-                myDict[a[i]].incrementFrequency()
-                myDict[a[i]].updateTimeStamp(i)
+                if a[i] in myDict.keys():
+                    myDict[a[i]].updateTimeStamp(i)
+                    myDict[a[i]].incrementFrequency()
                 
-            if printBool: print("\n%d -> No Page Fault" % (a[i]), end=' ')
+                if printBool: print("\n%d -> No Page Fault" % (a[i]), end=' ')
             
     print("\n Total page faults : %d." % (page_faults))
 
@@ -378,6 +394,7 @@ def __jygy_LRU():
 
 def __jygy_2():
     global a,n,m,printBool
+    Page.reset()
     myDict = {}
     x = 0
     page_faults = 0
@@ -444,11 +461,159 @@ def __jygy_2():
                 avgFrequency = totalFrequencies / itemsCount
                 myDict[a[i]].updateTimeStamp(i)
                 myDict[a[i]].incrementFrequency()
+                
+            if printBool: print("\n%d -> No Page Fault" % (a[i]), end=' ')
+            
+    print("\n Total page faults : %d." % (page_faults))
+
+
+
+
+
+
+
+def __static_random():
+    global a,n,m,printBool
+    Page.reset()
+    myDict = {}
+    x = 0
+    page_faults = 0
+    page = []
+    for i in range(m):
+        page.append(-1)
+
+    for i in range(n):
+        flag = 0
+        for j in range(m):
+            if(page[j] == a[i]):
+                flag = 1
+                break
+        if printBool: print("\n"+str(i) + "/"+str(n-1)+" ")
+        if flag == 0:
+            if page[x] != -1:
+                min = 999999999999999
+                A,B = myDict[page[x]].getAB()
+                value = random.random()
+                chosen = False
+                if value < A:
+                    chosen = True
+                else:
+                    chosen = False
+                for k in range(m):
+                    if(myDict[page[k]].getScore_random(chosen) < min):
+                        min = myDict[page[k]].getScore_random(chosen)
+                        x = k
+                myDict.pop(page[x])
+ 
+            page[x] = a[i]
+            if a[i] in myDict.keys():
+                myDict[a[i]].incrementFrequency()
+                myDict[a[i]].updateTimeStamp(i)
+            else:
+                myDict[a[i]] = Page(a[i],i)
+
+            x=(x+1)%m
+            page_faults+=1
+            if printBool: print("\n%d ->" % (a[i]), end=' ')
+            for j in range(m):
+                if page[j] != -1:
+                    if printBool: print(page[j], end=' ')
+                else:
+                    if printBool: print("-", end=' ')
+        else:
+            if a[i] in myDict.keys():
+                myDict[a[i]].incrementFrequency()
                 myDict[a[i]].updateTimeStamp(i)
                 
             if printBool: print("\n%d -> No Page Fault" % (a[i]), end=' ')
             
     print("\n Total page faults : %d." % (page_faults))
+
+
+
+
+
+
+
+
+def __adaptive_random():
+    global a,n,m,printBool
+    Page.reset()
+    myDict = {}
+    x = 0
+    page_faults = 0
+    page = []
+    for i in range(m):
+        page.append(-1)
+
+    for i in range(n):
+        flag = 0
+        for j in range(m):
+            if(page[j] == a[i]):
+                flag = 1
+                break
+        if printBool: print("\n"+str(i) + "/"+str(n-1)+" ")
+        if flag == 0:
+            if page[x] != -1:
+                min = 999999999999999
+
+                A,B = myDict[page[x]].getAB()
+                value = random.random()
+                chosen = False
+                if value < A:
+                    chosen = True
+                else:
+                    chosen = False
+                for k in range(m):
+                    if(myDict[page[k]].getScore_random(chosen) < min):
+                        min = myDict[page[k]].getScore_random(chosen)
+                        x = k
+                myDict.pop(page[x])
+ 
+            page[x] = a[i]
+            if a[i] in myDict.keys():
+                myDict[a[i]].incrementFrequency()
+                myDict[a[i]].updateTimeStamp(i)
+            else:
+                myDict[a[i]] = Page(a[i],i)
+
+            x=(x+1)%m
+            page_faults+=1
+            if printBool: print("\n%d ->" % (a[i]), end=' ')
+            for j in range(m):
+                if page[j] != -1:
+                    if printBool: print(page[j], end=' ')
+                else:
+                    if printBool: print("-", end=' ')
+        else:
+            totalTimeStamp = 0
+            totalFrequencies = 0
+            avgTimeStamp = 0
+            avgFrequency = 0
+            itemsCount = 0
+            for key,value in myDict.items():
+                totalTimeStamp += value.timeStamp
+                totalFrequencies += value.frequency 
+                itemsCount += 1
+            if itemsCount > 0:
+                avgTimeStamp = totalTimeStamp / itemsCount
+                avgFrequency = totalFrequencies / itemsCount
+                bias = 'none'
+                if a[i] in myDict.keys():
+                    bias = myDict[a[i]].getBias(avgFrequency, avgTimeStamp)
+                    myDict[a[i]].updateTimeStamp(i)
+                    myDict[a[i]].incrementFrequency()
+                    
+                if (bias != 'none'):
+                    Page.applyBias(bias)
+            
+                
+            if printBool: print("\n%d -> No Page Fault" % (a[i]), end=' ')
+            
+    print("\n Total page faults : %d." % (page_faults))
+
+
+
 
 
 
@@ -466,10 +631,12 @@ while True:
     print(" 1. FIFO.")
     print(" 2. LRU.")
     print(" 3. Optimal.")
-    print(" 4. JIGY.")
+    print(" 4. JIGY Adaptive.")
     print(" 5. JIGY's LRU.")
-    print(" 6. JIGY 2.")
-    print(" 7. Exit.")
+    print(" 6. JIGY Dynamic.")
+    print(" 7. Static Random.")
+    print(" 8. Adaptive Random.")
+    print(" 9. Exit.")
     ch = eval(input(" Select : "))
 
     if ch == 0:
@@ -487,4 +654,8 @@ while True:
     if ch == 6:
         __jygy_2()
     if ch == 7:
+        __static_random()
+    if ch == 8:
+        __adaptive_random()
+    if ch == 9:
         break
