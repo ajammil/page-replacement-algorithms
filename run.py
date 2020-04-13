@@ -614,6 +614,7 @@ def __adaptive_random():
 
 def __jygy_static():
     global a, n, m
+    Page.reset()
     myDict = {}
     x = 0
     page_faults = 0
